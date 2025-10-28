@@ -1,46 +1,23 @@
 {
-  "name": "chrome-task-automation-extension",
+  "name": "trajectory-logger",
   "version": "1.0.0",
-  "description": "A Chrome extension for recording sequences of actions for task automation using Hugging Face datasets and OpenRouter API.",
-  "main": "src/background/background.ts",
+  "description": "Chrome extension for recording user action sequences to train web agents",
   "scripts": {
     "build": "webpack --mode production",
-    "dev": "webpack --mode development",
-    "watch": "webpack --watch"
+    "dev": "webpack --mode development --watch",
+    "clean": "rm -rf dist"
   },
-  "keywords": [
-    "chrome",
-    "extension",
-    "automation",
-    "task",
-    "Hugging Face",
-    "OpenRouter"
-  ],
-  "author": "Your Name",
+  "keywords": ["chrome-extension", "web-automation", "ai-training"],
+  "author": "",
   "license": "MIT",
-  "dependencies": {
-    "axios": "^0.21.1",
-    "typescript": "^4.0.0"
-  },
   "devDependencies": {
-    "webpack": "^5.0.0",
-    "webpack-cli": "^4.0.0",
-    "ts-loader": "^8.0.0"
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^20.11.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.4"
   },
-  "browser_action": {
-    "default_popup": "popup/popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
-  },
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
-  "background": {
-    "scripts": ["background/service-worker.js"],
-    "persistent": false
-  }
+  "dependencies": {}
 }

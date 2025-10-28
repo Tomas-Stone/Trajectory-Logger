@@ -1,18 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Task Automation Extension",
+  "name": "Trajectory Logger",
   "version": "1.0.0",
-  "description": "A Chrome extension that records sequences of actions for task automation using Hugging Face datasets and OpenRouter API.",
+  "description": "Record user action sequences to train web agents",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "background": {
-    "service_worker": "background/service-worker.ts"
+    "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup/popup.html",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -22,18 +26,13 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content/content.ts"]
+      "js": ["content.js"],
+      "run_at": "document_idle"
     }
   ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["popup/popup.html"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }
