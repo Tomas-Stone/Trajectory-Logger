@@ -1,39 +1,129 @@
-// This file sets up the background script for the extension, handling events and managing the extension's lifecycle.
+import { Action, MessageType, RecordingState } from '../types';
+import { getRecordingState, setRecordingState } from '../storage/sequences';
 
-import { fetchHuggingFaceData } from '../api/huggingface';
-import { sendToOpenRouter } from '../api/openrouter';
-import { saveSequence, getSequences } from '../storage/sequences';
+console.log('[Background] Service worker started');
 
+// Listen for extension installation
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('Chrome Task Automation Extension installed.');
+  console.log('[Background] Extension installed');
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'fetchData') {
-        fetchHuggingFaceData(request.dataset)
-            .then(data => sendResponse({ success: true, data }))
-            .catch(error => sendResponse({ success: false, error }));
-        return true; // Indicates that the response will be sent asynchronously
-    }
+// Handle messages from content scripts and popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Background] Received message:', message.type);
 
-    if (request.action === 'sendToOpenRouter') {
-        sendToOpenRouter(request.payload)
-            .then(response => sendResponse({ success: true, response }))
-            .catch(error => sendResponse({ success: false, error }));
-        return true; // Indicates that the response will be sent asynchronously
-    }
+  switch (message.type) {
+    case 'CAPTURE_SCREENSHOT':
+      captureScreenshot(sender.tab?.id)
+        .then((screenshot) => sendResponse({ screenshot }))
+        .catch((error) => {
+          console.error('[Background] Screenshot error:', error);
+          sendResponse({ screenshot: null });
+        });
+      return true; // Keep channel open for async response
 
-    if (request.action === 'saveSequence') {
-        saveSequence(request.sequence)
-            .then(() => sendResponse({ success: true }))
-            .catch(error => sendResponse({ success: false, error }));
-        return true; // Indicates that the response will be sent asynchronously
-    }
+    case 'CAPTURE_ACTION':
+      captureAction(message.payload)
+        .then(() => sendResponse({ success: true }))
+        .catch((error) => {
+          console.error('[Background] Action capture error:', error);
+          sendResponse({ success: false, error: error.message });
+        });
+      return true;
 
-    if (request.action === 'getSequences') {
-        getSequences()
-            .then(sequences => sendResponse({ success: true, sequences }))
-            .catch(error => sendResponse({ success: false, error }));
-        return true; // Indicates that the response will be sent asynchronously
-    }
+    case MessageType.START_RECORDING:
+      startRecording(sender.tab?.id)
+        .then(() => sendResponse({ success: true }))
+        .catch((error) => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    case MessageType.STOP_RECORDING:
+      stopRecording(sender.tab?.id)
+        .then(() => sendResponse({ success: true }))
+        .catch((error) => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    default:
+      sendResponse({ success: false, error: 'Unknown message type' });
+  }
+
+  return false;
 });
+
+/**
+ * Capture a screenshot of the active tab
+ */
+async function captureScreenshot(tabId?: number): Promise<string | null> {
+  try {
+    if (!tabId) {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      tabId = tabs[0]?.id;
+    }
+
+    if (!tabId) {
+      throw new Error('No active tab found');
+    }
+
+    // Capture visible tab as data URL
+    const dataUrl = await chrome.tabs.captureVisibleTab(undefined, {
+      format: 'png',
+      quality: 80,
+    });
+
+    return dataUrl;
+  } catch (error) {
+    console.error('[Background] Error capturing screenshot:', error);
+    return null;
+  }
+}
+
+/**
+ * Add action to current recording sequence
+ */
+async function captureAction(action: Action): Promise<void> {
+  const state = await getRecordingState();
+
+  if (!state.isRecording || !state.currentSequence) {
+    throw new Error('Not currently recording');
+  }
+
+  // Add action to current sequence
+  state.currentSequence.actions.push(action);
+  
+  await setRecordingState(state);
+  console.log('[Background] Action added to sequence:', action.type);
+}
+
+/**
+ * Start recording by sending message to content script
+ */
+async function startRecording(tabId?: number): Promise<void> {
+  if (!tabId) {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    tabId = tabs[0]?.id;
+  }
+
+  if (!tabId) {
+    throw new Error('No active tab found');
+  }
+
+  await chrome.tabs.sendMessage(tabId, { type: MessageType.START_RECORDING });
+  console.log('[Background] Recording started in tab:', tabId);
+}
+
+/**
+ * Stop recording by sending message to content script
+ */
+async function stopRecording(tabId?: number): Promise<void> {
+  if (!tabId) {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    tabId = tabs[0]?.id;
+  }
+
+  if (!tabId) {
+    throw new Error('No active tab found');
+  }
+
+  await chrome.tabs.sendMessage(tabId, { type: MessageType.STOP_RECORDING });
+  console.log('[Background] Recording stopped in tab:', tabId);
+}

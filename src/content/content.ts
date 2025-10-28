@@ -1,21 +1,47 @@
-// This file contains the content script that interacts with web pages, allowing the extension to manipulate the DOM and capture user actions.
+import { ActionRecorder } from './recorder';
+import { MessageType } from '../types';
 
-const actionQueue: Array<Function> = [];
+let recorder: ActionRecorder | null = null;
 
-function recordAction(action: Function) {
-    actionQueue.push(action);
+// Initialize recorder when content script loads
+function init() {
+  recorder = new ActionRecorder();
+  console.log('[Content] Action recorder initialized');
 }
 
-function executeActions() {
-    actionQueue.forEach(action => action());
-}
+// Listen for messages from background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Content] Received message:', message.type);
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "record") {
-        recordAction(request.payload);
-        sendResponse({ status: "recording" });
-    } else if (request.action === "execute") {
-        executeActions();
-        sendResponse({ status: "executed" });
-    }
+  switch (message.type) {
+    case MessageType.START_RECORDING:
+      if (recorder) {
+        recorder.start();
+        sendResponse({ success: true });
+      } else {
+        sendResponse({ success: false, error: 'Recorder not initialized' });
+      }
+      break;
+
+    case MessageType.STOP_RECORDING:
+      if (recorder) {
+        recorder.stop();
+        sendResponse({ success: true });
+      } else {
+        sendResponse({ success: false, error: 'Recorder not initialized' });
+      }
+      break;
+
+    default:
+      sendResponse({ success: false, error: 'Unknown message type' });
+  }
+
+  return true; // Keep the message channel open for async response
 });
+
+// Initialize on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

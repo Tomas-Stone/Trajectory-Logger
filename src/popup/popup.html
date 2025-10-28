@@ -3,24 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Automation</title>
+    <title>Trajectory Logger</title>
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <div id="popup-container">
-        <h1>Task Automation</h1>
-        <div id="recording-section">
-            <button id="start-recording">Start Recording</button>
-            <button id="stop-recording" disabled>Stop Recording</button>
-        </div>
-        <div id="recorded-actions">
-            <h2>Recorded Actions</h2>
-            <ul id="actions-list"></ul>
-        </div>
-        <div id="generate-task">
-            <button id="generate-task-btn">Generate Task</button>
-        </div>
+    <div class="container">
+        <header>
+            <h1>🎯 Trajectory Logger</h1>
+        </header>
+
+        <!-- Configuration Section -->
+        <section id="config-section" class="section">
+            <h2>⚙️ Configuration</h2>
+            <div class="config-group">
+                <label for="openrouter-key">OpenRouter API Key:</label>
+                <input type="password" id="openrouter-key" placeholder="sk-...">
+            </div>
+            <div class="config-group">
+                <label for="huggingface-key">HuggingFace API Key:</label>
+                <input type="password" id="huggingface-key" placeholder="hf_...">
+            </div>
+            <div class="config-group">
+                <label for="dataset-repo">Dataset Repository:</label>
+                <input type="text" id="dataset-repo" placeholder="username/dataset-name">
+            </div>
+            <button id="save-config-btn" class="btn btn-secondary">Save Configuration</button>
+        </section>
+
+        <!-- Task Section -->
+        <section id="task-section" class="section">
+            <h2>📋 Current Task</h2>
+            <div id="task-display" class="task-display">
+                <p id="task-text">No task loaded. Click "Get Task" to generate one.</p>
+            </div>
+            <button id="get-task-btn" class="btn btn-primary">Get Task</button>
+        </section>
+
+        <!-- Recording Section -->
+        <section id="recording-section" class="section">
+            <h2>⏺️ Recording</h2>
+            <div class="status" id="recording-status">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status-text">Not Recording</span>
+            </div>
+            <div class="action-count">
+                <strong>Actions recorded:</strong> <span id="action-count">0</span>
+            </div>
+            <div class="btn-group">
+                <button id="start-recording-btn" class="btn btn-success" disabled>Start Recording</button>
+                <button id="stop-recording-btn" class="btn btn-danger" disabled>Stop Recording</button>
+            </div>
+        </section>
+
+        <!-- Submit Section -->
+        <section id="submit-section" class="section">
+            <h2>✅ Submit Result</h2>
+            <p>Did you successfully complete the task?</p>
+            <div class="btn-group">
+                <button id="submit-success-btn" class="btn btn-success" disabled>✓ Success</button>
+                <button id="submit-failure-btn" class="btn btn-warning" disabled>✗ Failed</button>
+            </div>
+        </section>
+
+        <!-- Sequences Section -->
+        <section id="sequences-section" class="section">
+            <h2>📊 Saved Sequences</h2>
+            <div id="sequences-list">
+                <p class="empty-state">No sequences saved yet.</p>
+            </div>
+            <button id="refresh-sequences-btn" class="btn btn-secondary">Refresh List</button>
+        </section>
+
+        <!-- Status Messages -->
+        <div id="message-container" class="message-container"></div>
     </div>
-    <script src="popup.ts"></script>
+
+    <script src="popup.js"></script>
 </body>
 </html>
