@@ -65,9 +65,8 @@ async function captureScreenshot(tabId?: number): Promise<string | null> {
     }
 
     // Capture visible tab as data URL
-    const dataUrl = await chrome.tabs.captureVisibleTab(undefined, {
+    const dataUrl = await chrome.tabs.captureVisibleTab({
       format: 'png',
-      quality: 80,
     });
 
     return dataUrl;
